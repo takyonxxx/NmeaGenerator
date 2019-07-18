@@ -6,10 +6,16 @@
 
 QT       += core gui network positioning
 
+CONFIG += mobility
+MOBILITY += sensors
+MOBILITY += location
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = NmeaGenerator
 TEMPLATE = app
+
+win32: DEFINES += WIN32 _WINDOWS _USE_MATH_DEFINES
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
@@ -21,9 +27,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
-
-CONFIG+=mobility
-MOBILITY=location
 
 CONFIG += c++11
 
@@ -43,7 +46,29 @@ ios {
 QMAKE_INFO_PLIST = ios/Info.plist
 }
 
+android {
+
+QT += androidextras
+
+DISTFILES += \
+    android/AndroidManifest.xml \
+    android/build.gradle \
+    android/gradle/wrapper/gradle-wrapper.jar \
+    android/gradle/wrapper/gradle-wrapper.properties \
+    android/gradlew \
+    android/gradlew.bat \
+    android/res/values/libs.xml
+
+contains(ANDROID_TARGET_ARCH,armeabi-v7a) {
+    ANDROID_PACKAGE_SOURCE_DIR = \
+        $$PWD/android
+}
+}
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+winrt: WINRT_MANIFEST.capabilities_device += location
+

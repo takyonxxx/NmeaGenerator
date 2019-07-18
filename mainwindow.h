@@ -9,6 +9,17 @@
 #include <QGeoSatelliteInfoSource>
 #include <QGeoSatelliteInfo>
 
+#if defined(ANDROID) || defined(__ANDROID__)
+#include <QtAndroid>
+#include <QAndroidJniEnvironment>
+#include <QAndroidJniObject>
+#include <QKeyEvent>
+#endif
+
+
+#define SCREEN_ORIENTATION_LANDSCAPE 0
+#define SCREEN_ORIENTATION_PORTRAIT 1
+
 namespace Ui {
 class MainWindow;
 }
@@ -26,22 +37,61 @@ public:
         return ((*(uint*)&value) & 0x7fffffff) > 0x7f800000;
     }
 
-    /*QString getMacForIP(QString ipAddress)
+#if defined(ANDROID) || defined(__ANDROID__)
+    void keep_screen_on(bool on) {
+        QtAndroid::runOnAndroidThread([on]{
+            QAndroidJniObject activity = QtAndroid::androidActivity();
+            if (activity.isValid()) {
+                QAndroidJniObject window =
+                        activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
+
+                if (window.isValid()) {
+                    const int FLAG_KEEP_SCREEN_ON = 128;
+                    if (on) {
+                        window.callMethod<void>("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+                    } else {
+                        window.callMethod<void>("clearFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+                    }
+                }
+            }
+            QAndroidJniEnvironment env;
+            if (env->ExceptionCheck()) {
+                env->ExceptionClear();
+            }
+        });
+    }
+
+    bool requestFineLocationPermission()
     {
-        QString MAC;
-        QProcess process;
-        //
-        process.start(QString("arp -a %1").arg(ipAddress));
-        if(process.waitForFinished())
-        {
-            QString result = process.readAll();
-            QStringList list = result.split(QRegularExpression("\\s+"));
-            if(list.contains(ipAddress))
-                MAC = list.at(list.indexOf(ipAddress) + 1);
+        QtAndroid::PermissionResult request = QtAndroid::checkPermission("android.permission.ACCESS_FINE_LOCATION");
+        if (request == QtAndroid::PermissionResult::Denied){
+            QtAndroid::requestPermissionsSync(QStringList() <<  "android.permission.ACCESS_FINE_LOCATION");
+            request = QtAndroid::checkPermission("android.permission.ACCESS_FINE_LOCATION");
+            if (request == QtAndroid::PermissionResult::Denied)
+            {
+                qDebug() << "FineLocation Permission denied";
+                return false;
+            }
         }
-        //
-        return MAC;
-    }*/
+        qDebug() << "FineLocation Permissions granted!";
+        return true;
+    }
+
+    bool requestStorageWritePermission() {
+        QtAndroid::PermissionResult request = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+        if(request == QtAndroid::PermissionResult::Denied) {
+            QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
+            request = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+            if(request == QtAndroid::PermissionResult::Denied)
+            {
+                qDebug() << "StorageWrite Permission denied";
+                return false;
+            }
+        }
+        qDebug() << "StorageWrite Permissions granted!";
+        return true;
+    }
+#endif
 
 private:
     QUdpSocket m_Socket;
@@ -52,6 +102,11 @@ private:
     void deInitUDP();
     void setIpAddress();
     bool startGpsSource();
+
+#if defined(ANDROID) || defined(__ANDROID__)
+    bool setScreenOrientation(int orientation);
+    void keyPressEvent(QKeyEvent *k);
+#endif
 
 private slots:
     void readData();

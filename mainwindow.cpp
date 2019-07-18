@@ -10,6 +10,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+#if defined(ANDROID) || defined(__ANDROID__)
+    if (!requestFineLocationPermission())
+        qApp->quit();
+    setScreenOrientation(SCREEN_ORIENTATION_PORTRAIT);
+#endif
+
     ui->pushButton_Exit->setStyleSheet("font-size: 15pt; color: white;background-color: rgba(0, 102, 153, 255);");
     ui->pushButton_Start->setStyleSheet("font-size: 15pt; color: white;background-color: rgba(0, 102, 153, 255);");
     ui->pushButton_SetIP->setStyleSheet("font-size: 15pt; color: white;background-color: rgba(0, 102, 153, 255);");
@@ -28,6 +34,30 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+#if defined(ANDROID) || defined(__ANDROID__)
+
+bool MainWindow::setScreenOrientation(int orientation)
+{
+    QAndroidJniObject activity = QtAndroid::androidActivity();
+
+    if(activity.isValid())
+    {
+        activity.callMethod<void>("setRequestedOrientation", "(I)V", orientation);
+        keep_screen_on(true);
+        return true;
+    }
+    return false;
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *k)
+{
+    if( k->key() == Qt::Key_MediaPrevious )
+    {
+        return;
+    }
+}
+#endif
 
 bool MainWindow::startGpsSource()
 {
@@ -149,7 +179,7 @@ void MainWindow::satellitesInUseUpdated(const QList<QGeoSatelliteInfo> &satellit
 
 void MainWindow::satellitesInViewUpdated(const QList<QGeoSatelliteInfo> &satellites)
 {
-     qDebug() << tr("satellitesInViewUpdated received");
+    qDebug() << tr("satellitesInViewUpdated received");
 }
 
 void MainWindow::updateTimeout(void)
@@ -168,8 +198,10 @@ void MainWindow::setIpAddress()
                 qDebug() << interface.name() + " "+ entry.ip().toString() +" " + interface.hardwareAddress();
 
                 if ( interface.hardwareAddress() != "00:00:00:00:00:00" && entry.ip().toString().contains(".")
-                     && !interface.humanReadableName().contains("VM")
-                     && (interface.name().contains("en0") || interface.name().contains("wireless") || interface.name().contains("bridge")))
+                     && (interface.name().contains("en0")
+                         || interface.name().contains("eth0")
+                         || interface.name().contains("wireless")
+                         || interface.name().contains("bridge")))
                 {
                     ui->lineEdit_IP->setText(entry.ip().toString());
                 }
