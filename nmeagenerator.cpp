@@ -21,11 +21,11 @@ QString NmeaGenerator::DD2NMEA(double lat, double lng)
     QString lngh = lng > 0 ? "E" : "W";
 
     nmea += QString("%1").arg(static_cast<int>(latd), 2, 10, QChar('0'));
-    str = str.sprintf("%.5f",latm)  + "," + lath + ",";
+    str = str.asprintf("%.5f",latm)  + "," + lath + ",";
     nmea += str;
 
     nmea += QString("%1").arg(static_cast<int>(lngd), 3, 10, QChar('0'));
-    str = str.sprintf("%.5f",lngm)  + "," + lngh;
+    str = str.asprintf("%.5f",lngm)  + "," + lngh;
     nmea += str;
 
     return nmea;
@@ -55,7 +55,7 @@ QString NmeaGenerator::CalculateChecksum(const QString &Sentence)
     }
 
     // Calculated checksum converted to a 2 digit hex string
-    checksum = checksum.sprintf("%02X", sum);
+    checksum = checksum.asprintf("%02X", sum);
     return checksum;
 }
 
@@ -84,12 +84,12 @@ QString NmeaGenerator::BuildGPRMC(const GpsData & gpsData)
     gprmc += gpsData.fixTime + QString(",");
     gprmc += QString("A,");
     gprmc += coords + QString(",");
-    str = str.sprintf("%05.1f", gpsData.ground_speed);
+    str = str.asprintf("%05.1f", gpsData.ground_speed);
     gprmc += str + QString(",");
-    str = str.sprintf("%05.1f", gpsData.track_angle);
+    str = str.asprintf("%05.1f", gpsData.track_angle);
     gprmc += str + QString(",");
     gprmc += gpsData.date + QString(",");
-    str = str.sprintf("%05.1f", gpsData.magnetic_variation);
+    str = str.asprintf("%05.1f", gpsData.magnetic_variation);
     gprmc += str + QString(",W*");
 
     auto checksum = CalculateChecksum(gprmc);
@@ -134,13 +134,13 @@ QString NmeaGenerator::BuildGPGGA(const GpsData & gpsData)
     gpgga += gpsData.fixTime + QString(",");
     gpgga += coords + QString(",");
     gpgga += QString("1,");
-    str = str.sprintf("%02d", gpsData.number_of_satellites);
+    str = str.asprintf("%02d", gpsData.number_of_satellites);
     gpgga += str + QString(",");
-    str = str.sprintf("%02.1f", gpsData.horizontal_dilution);
+    str = str.asprintf("%02.1f", gpsData.horizontal_dilution);
     gpgga += str + QString(",");
-    str = str.sprintf("%04.1f", gpsData.altitude);
+    str = str.asprintf("%04.1f", gpsData.altitude);
     gpgga += str + QString(",M,");
-    str = str.sprintf("%03.1f", gpsData.height_of_geoid);
+    str = str.asprintf("%03.1f", gpsData.height_of_geoid);
     gpgga += str + QString(",M,");
     gpgga += QString(",*");
 

@@ -81,7 +81,7 @@ bool MainWindow::startGpsSource()
     m_positionSource->setPreferredPositioningMethods(QGeoPositionInfoSource::AllPositioningMethods);
     m_positionSource->setUpdateInterval(0);
     connect(m_positionSource, &QGeoPositionInfoSource::positionUpdated, this, &MainWindow::positionUpdated);
-    connect(m_positionSource, &QGeoPositionInfoSource::updateTimeout, this, &MainWindow::updateTimeout);
+//    connect(m_positionSource, &QGeoPositionInfoSource::updateTimeout, this, &MainWindow::updateTimeout);
 
     m_satelliteSource = QGeoSatelliteInfoSource::createDefaultSource(this);
     if (m_satelliteSource == nullptr)
@@ -154,12 +154,12 @@ void MainWindow::positionUpdated(QGeoPositionInfo gpsPos)
 
     auto gprmc = nmeaGenerator.BuildGPRMC(gpsData);
     QByteArray data;
-    data.append(gprmc);
+    data.append(gprmc.toStdString());
     sendData(ui->lineEdit_Port->text().toInt(), data);
 
     auto gpgga = nmeaGenerator.BuildGPGGA(gpsData);
     data.clear();
-    data.append(gpgga);
+    data.append(gpgga.toStdString());
     sendData(ui->lineEdit_Port->text().toInt(), data);
 
     trackCount++;
